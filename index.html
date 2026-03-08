@@ -143,8 +143,8 @@ font-size:18px;
 
 .matrixToolbar{
 display:flex;
-justify-content:space-between;
 align-items:center;
+gap:14px;
 }
 
 .checkboxRow{
@@ -300,8 +300,8 @@ Số nút mỗi hàng
 <button class="smallBtn" onclick="showMeasure()">← Quay lại</button>
 
 <div class="checkboxRow">
-<input type="checkbox" id="excelMode" onchange="renderMatrix()">
-<span>Hiển thị dạng Excel</span>
+<span>Dạng excel</span>
+<input type="checkbox" id="excelMode" checked onchange="renderMatrix()">
 </div>
 
 </div>
@@ -567,7 +567,7 @@ columns.push({length:l,values:arr.slice(i,i+10)})
 
 let maxRows=10
 
-let html="<div class='info'>Hàng đầu tiên là Dài (dm) • Giá trị bên dưới là Rộng (cm)</div>"
+let html="<div class='info'>Dài (dm) là tiêu đề cột • Giá trị bên dưới là Rộng (cm)</div>"
 
 html+="<table><tr>"
 
