@@ -4,84 +4,108 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Đo Gỗ</title>
+<title>Đo Quy Cách Gỗ</title>
 
 <style>
 
 body{
-font-family:-apple-system,BlinkMacSystemFont;
 margin:0;
-background:#f2f4f7;
-text-align:center;
+font-family:-apple-system,BlinkMacSystemFont,Inter,Arial;
+background:#f5f7fa;
 }
 
-.screen{display:none;padding:12px}
+.header{
+background:#1e293b;
+color:white;
+padding:14px;
+text-align:center;
+font-weight:600;
+}
+
+.screen{display:none;padding:14px}
 .active{display:block}
 
-button{
-padding:12px;
-border-radius:12px;
-border:none;
+.card{
 background:white;
-box-shadow:0 3px 10px rgba(0,0,0,0.15);
+border-radius:14px;
+padding:14px;
+margin-bottom:12px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+button{
+border:none;
+border-radius:12px;
+padding:12px;
 font-size:16px;
+background:#2563eb;
+color:white;
+}
+
+.smallBtn{
+background:#e2e8f0;
+color:black;
 }
 
 .grid{
 display:grid;
 gap:8px;
-margin:10px;
+margin-top:10px;
+}
+
+.grid button{
+background:white;
+color:black;
+border:1px solid #e2e8f0;
+font-size:18px;
 }
 
 .selected{
-background:#2e7d32;
-color:white;
+background:#22c55e!important;
+color:white!important;
 }
 
 .disabled{
-opacity:0.35;
+opacity:0.3;
 pointer-events:none;
 }
 
-#toast{
+.toast{
 position:fixed;
 top:20px;
 left:50%;
 transform:translateX(-50%);
-background:#e8f5e9;
-color:#1b5e20;
-padding:10px 16px;
-border-radius:12px;
+background:#dcfce7;
+color:#166534;
+padding:10px 18px;
+border-radius:10px;
 display:none;
 }
 
 .list{
 max-height:120px;
 overflow:auto;
-text-align:left;
 }
 
 .matrix{
 overflow:auto;
 }
 
-.matrix table{
+table{
 border-collapse:collapse;
 margin:auto;
 }
 
-.matrix td,.matrix th{
-border:1px solid #ccc;
-width:42px;
-height:42px;
+td,th{
+border:1px solid #ddd;
+width:44px;
+height:44px;
 text-align:center;
+font-size:14px;
 }
 
-.headerBar{
-display:flex;
-justify-content:center;
-gap:10px;
-margin-bottom:10px;
+th{
+background:#f1f5f9;
 }
 
 </style>
@@ -90,13 +114,15 @@ margin-bottom:10px;
 
 <body>
 
-<div id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <!-- SETUP -->
 
 <div id="setup" class="screen active">
 
-<h2>Cấu hình</h2>
+<div class="header">Cấu hình kiện</div>
+
+<div class="card">
 
 Mã kiện<br>
 <input id="bundle" value="A001"><br><br>
@@ -104,52 +130,83 @@ Mã kiện<br>
 Độ dày (cm)<br>
 <input id="thickness" value="3"><br><br>
 
-Khoảng chiều dài (dm)<br>
+Chiều dài (dm)<br>
 <input id="lenMin" value="20"> -
-<input id="lenMax" value="40"><br><br>
-
-Khoảng chiều rộng (cm)<br>
-<input id="widMin" value="8"> -
-<input id="widMax" value="30"><br><br>
-
-Số nút mỗi hàng<br>
-
-<button onclick="gridMinus()">-</button>
-<span id="gridCount">6</span>
-<button onclick="gridPlus()">+</button>
+<input id="lenMax" value="36">
 
 <br><br>
 
-<button onclick="startMeasure()">Bắt đầu đo</button>
+Chiều rộng (cm)<br>
+<input id="widMin" value="14"> -
+<input id="widMax" value="30">
+
+<br><br>
+
+Số nút mỗi hàng
+
+<br>
+
+<button class="smallBtn" onclick="gridMinus()">-</button>
+<span id="gridCount">6</span>
+<button class="smallBtn" onclick="gridPlus()">+</button>
 
 </div>
 
-<!-- NHẬP LIỆU -->
+<button onclick="startMeasure()">Bắt đầu nhập</button>
+
+</div>
+
+<!-- MEASURE -->
 
 <div id="measure" class="screen">
 
-<div class="headerBar">
-<button onclick="showSetup()">← Quay lại</button>
-<button onclick="resetBoards()">Reset</button>
-<button onclick="undoBoard()">Undo</button>
+<div class="header">
+
+<span id="headerInfo"></span>
+
 </div>
 
-<h3 id="header"></h3>
+<div class="card">
 
-<div>
-<span id="pcs">0 tấm</span> •
-<span id="vol">0.000 m³</span>
-<button onclick="showMatrix()">Ma trận</button>
+<button class="smallBtn" onclick="showSetup()">← Cấu hình</button>
+
+<button class="smallBtn" onclick="resetBoards()">Reset</button>
+
+<button class="smallBtn" onclick="undo()">Undo</button>
+
+<button onclick="showMatrix()">Matrix</button>
+
 </div>
 
-<h3>Dài (dm)</h3>
+<div class="card">
+
+<b id="summary"></b>
+
+</div>
+
+<div class="card">
+
+<b>Dài (dm)</b>
+
 <div id="lengthGrid" class="grid"></div>
 
-<h3>Rộng (cm)</h3>
+</div>
+
+<div class="card">
+
+<b>Rộng (cm)</b>
+
 <div id="widthGrid" class="grid disabled"></div>
 
-<h3>Tấm vừa nhập</h3>
+</div>
+
+<div class="card">
+
+<b>Tấm vừa nhập</b>
+
 <div id="boardList" class="list"></div>
+
+</div>
 
 </div>
 
@@ -157,61 +214,99 @@ Số nút mỗi hàng<br>
 
 <div id="matrix" class="screen">
 
-<button onclick="showMeasure()">← Quay lại</button>
+<div class="header">Ma trận quy cách</div>
 
-<h3 id="matrixHeader"></h3>
+<div class="card">
 
-<div class="matrix" id="matrixContainer"></div>
+<button class="smallBtn" onclick="showMeasure()">← Quay lại</button>
 
-<br>
+<button onclick="exportImage()">Xuất ảnh</button>
 
-<button onclick="exportImage()">Xuất ảnh ma trận</button>
+</div>
+
+<div class="card">
+
+<div id="matrixHeader"></div>
+
+</div>
+
+<div class="matrix card" id="matrixContainer"></div>
 
 </div>
 
 <script>
 
 let boards=[]
-let grid=6
 let selectedLength=null
+let grid=6
 
-function showToast(text){
+function toast(text){
+
 let t=document.getElementById("toast")
+
 t.innerText=text
 t.style.display="block"
-setTimeout(()=>t.style.display="none",500)
+
+setTimeout(()=>t.style.display="none",1000)
+
 }
 
-function gridMinus(){if(grid>5)grid--;gridCount.innerText=grid}
-function gridPlus(){if(grid<7)grid++;gridCount.innerText=grid}
+function gridMinus(){
+
+if(grid>5)grid--
+
+gridCount.innerText=grid
+
+}
+
+function gridPlus(){
+
+if(grid<7)grid++
+
+gridCount.innerText=grid
+
+}
 
 function startMeasure(){
 
 setup.classList.remove("active")
+
 measure.classList.add("active")
 
-header.innerText=
-bundle.value+" • "+thickness.value+"cm"
+headerInfo.innerText=bundle.value+" • "+thickness.value+"cm"
 
 createButtons()
+
+updateSummary()
 
 }
 
 function showSetup(){
+
 measure.classList.remove("active")
+
 setup.classList.add("active")
+
 }
 
 function resetBoards(){
+
 boards=[]
+
 updateSummary()
+
 renderList()
+
 }
 
-function undoBoard(){
+function undo(){
+
 boards.pop()
+
 updateSummary()
+
 renderList()
+
 }
 
 function createButtons(){
@@ -231,6 +326,7 @@ widthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 for(let i=lenMinV;i<=lenMaxV;i++){
 
 let b=document.createElement("button")
+
 b.innerText=i
 
 b.onclick=()=>{
@@ -253,6 +349,7 @@ lengthGrid.appendChild(b)
 for(let i=widMinV;i<=widMaxV;i++){
 
 let b=document.createElement("button")
+
 b.innerText=i
 
 b.onclick=()=>{
@@ -261,7 +358,7 @@ if(selectedLength==null)return
 
 boards.push({l:selectedLength,w:i})
 
-showToast("Đã thêm "+selectedLength+" x "+i)
+toast("Đã thêm "+selectedLength+" x "+i)
 
 selectedLength=null
 
@@ -271,6 +368,7 @@ document.querySelectorAll("#lengthGrid button")
 widthGrid.classList.add("disabled")
 
 updateSummary()
+
 renderList()
 
 }
@@ -283,15 +381,17 @@ widthGrid.appendChild(b)
 
 function updateSummary(){
 
-pcs.innerText=boards.length+" tấm"
-
-let v=0
+let vol=0
 
 boards.forEach(b=>{
-v+=(b.l/10)*(b.w/100)*(thickness.value/100)
+
+vol+=(b.l/10)*(b.w/100)*(thickness.value/100)
+
 })
 
-vol.innerText=v.toFixed(3)+" m³"
+summary.innerText=
+
+boards.length+" tấm • "+vol.toFixed(3)+" m³"
 
 }
 
@@ -301,32 +401,32 @@ boardList.innerHTML=""
 
 boards.slice(-10).reverse().forEach((b,i)=>{
 
-let div=document.createElement("div")
+let d=document.createElement("div")
 
-div.innerHTML=b.l+" x "+b.w+
-" <button onclick='deleteBoard("+i+")'>X</button>"
+d.innerHTML=b.l+" x "+b.w+
+" <button onclick='deleteBoard("+i+")'>x</button>"
 
-boardList.appendChild(div)
+boardList.appendChild(d)
 
 })
 
 }
 
 function deleteBoard(i){
+
 boards.splice(boards.length-1-i,1)
+
 updateSummary()
+
 renderList()
+
 }
 
 function showMatrix(){
 
 measure.classList.remove("active")
-matrix.classList.add("active")
 
-matrixHeader.innerText=
-bundle.value+" • "+
-boards.length+" tấm • "+
-vol.innerText
+matrix.classList.add("active")
 
 renderMatrix()
 
@@ -335,6 +435,7 @@ renderMatrix()
 function showMeasure(){
 
 matrix.classList.remove("active")
+
 measure.classList.add("active")
 
 }
@@ -344,14 +445,18 @@ function renderMatrix(){
 let map={}
 
 boards.forEach(b=>{
+
 let key=b.w+"_"+b.l
+
 map[key]=(map[key]||0)+1
+
 })
 
 let widths=[...new Set(boards.map(b=>b.w))].sort((a,b)=>a-b)
+
 let lengths=[...new Set(boards.map(b=>b.l))].sort((a,b)=>a-b)
 
-let html="<table><tr><th>Rộng\\Dài</th>"
+let html="<table><tr><th>Rộng \\ Dài</th>"
 
 lengths.forEach(l=>html+="<th>"+l+"</th>")
 
@@ -367,9 +472,9 @@ let v=map[w+"_"+l]||0
 
 let color=
 v==0?"white":
-v==1?"#c8e6c9":
-v==2?"#81c784":
-"#388e3c"
+v==1?"#dcfce7":
+v==2?"#86efac":
+"#22c55e"
 
 html+="<td style='background:"+color+"'>"+v+"</td>"
 
@@ -382,6 +487,9 @@ html+="</tr>"
 html+="</table>"
 
 matrixContainer.innerHTML=html
+
+matrixHeader.innerText=
+bundle.value+" • "+boards.length+" tấm"
 
 }
 
@@ -405,12 +513,15 @@ ctx.fillText("Độ dày: "+thickness.value+"cm",20,70)
 ctx.fillText("Số tấm: "+boards.length,20,100)
 
 boards.forEach((b,i)=>{
+
 ctx.fillText(b.l+" x "+b.w,20,150+i*20)
+
 })
 
 let link=document.createElement("a")
 
 link.download="matrix.png"
+
 link.href=canvas.toDataURL()
 
 link.click()
