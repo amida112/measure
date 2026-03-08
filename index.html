@@ -83,7 +83,7 @@ display:none;
 }
 
 .list{
-max-height:120px;
+max-height:220px;
 overflow:auto;
 }
 
@@ -108,6 +108,38 @@ th{
 background:#f1f5f9;
 }
 
+.info{
+text-align:center;
+margin-bottom:10px;
+font-size:14px;
+}
+
+.formGrid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:16px 20px;
+}
+
+input{
+width:100%;
+padding:8px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+.checkboxRow{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.matrixStats{
+text-align:center;
+margin-top:6px;
+font-size:14px;
+font-weight:600;
+}
+
 </style>
 
 </head>
@@ -124,21 +156,41 @@ background:#f1f5f9;
 
 <div class="card">
 
-Mã kiện<br>
-<input id="bundle" value=""><br><br>
+<div class="formGrid">
 
+<div>
+Mã kiện<br>
+<input id="bundle">
+</div>
+
+<div>
+Loại gỗ<br>
+<input id="woodType">
+</div>
+
+<div>
 Độ dày (cm)<br>
-<input id="thickness" value=""><br><br>
+<input id="thickness" type="number" min="1" step="0.1">
+</div>
+
+<div>
+Chất lượng<br>
+<input id="quality">
+</div>
+
+</div>
+
+<br>
 
 Chiều dài (dm)<br>
 <input id="lenMin" value="20"> -
-<input id="lenMax" value="35">
+<input id="lenMax" value="36">
 
 <br><br>
 
 Chiều rộng (cm)<br>
-<input id="widMin" value="15"> -
-<input id="widMax" value="35">
+<input id="widMin" value="14"> -
+<input id="widMax" value="30">
 
 <br><br>
 
@@ -147,7 +199,7 @@ Số nút mỗi hàng
 <br>
 
 <button class="smallBtn" onclick="gridMinus()">-</button>
-<span id="gridCount">5</span>
+<span id="gridCount">6</span>
 <button class="smallBtn" onclick="gridPlus()">+</button>
 
 </div>
@@ -161,33 +213,25 @@ Số nút mỗi hàng
 <div id="measure" class="screen">
 
 <div class="header">
-
 <span id="headerInfo"></span>
-
 </div>
 
 <div class="card">
 
 <button class="smallBtn" onclick="showSetup()">← Cấu hình</button>
-
 <button class="smallBtn" onclick="resetBoards()">Reset</button>
-
 <button class="smallBtn" onclick="undo()">Undo</button>
-
 <button onclick="showMatrix()">Matrix</button>
 
 </div>
 
 <div class="card">
-
 <b id="summary"></b>
-
 </div>
 
 <div class="card">
 
 <b>Dài (dm)</b>
-
 <div id="lengthGrid" class="grid"></div>
 
 </div>
@@ -195,15 +239,13 @@ Số nút mỗi hàng
 <div class="card">
 
 <b>Rộng (cm)</b>
-
 <div id="widthGrid" class="grid disabled"></div>
 
 </div>
 
 <div class="card">
 
-<b>Tấm vừa nhập</b>
-
+<b>Danh sách tấm đã nhập</b>
 <div id="boardList" class="list"></div>
 
 </div>
@@ -220,13 +262,21 @@ Số nút mỗi hàng
 
 <button class="smallBtn" onclick="showMeasure()">← Quay lại</button>
 
-<button onclick="exportImage()">Xuất ảnh</button>
+<span class="checkboxRow">
+<input type="checkbox" id="excelMode" onchange="renderMatrix()">
+<span>Hiển thị dạng Excel</span>
+</span>
 
 </div>
 
 <div class="card">
 
 <div id="matrixHeader"></div>
+
+<div class="matrixStats">
+<span id="matrixPieces"></span><br>
+<span id="matrixVolume"></span>
+</div>
 
 </div>
 
@@ -241,79 +291,61 @@ let selectedLength=null
 let grid=6
 
 function toast(text){
-
 let t=document.getElementById("toast")
-
 t.innerText=text
 t.style.display="block"
-
-setTimeout(()=>t.style.display="none",1000)
-
+setTimeout(()=>t.style.display="none",1500)
 }
 
-function gridMinus(){
-
-if(grid>5)grid--
-
-gridCount.innerText=grid
-
-}
-
-function gridPlus(){
-
-if(grid<7)grid++
-
-gridCount.innerText=grid
-
-}
+function gridMinus(){ if(grid>5)grid--; gridCount.innerText=grid }
+function gridPlus(){ if(grid<7)grid++; gridCount.innerText=grid }
 
 function startMeasure(){
 
-setup.classList.remove("active")
+if(bundle.value.trim()==""){ alert("Vui lòng nhập mã kiện"); return }
+if(thickness.value.trim()==""){ alert("Vui lòng nhập độ dày"); return }
 
+setup.classList.remove("active")
 measure.classList.add("active")
 
-headerInfo.innerText=bundle.value+" • "+thickness.value+"cm"
+updateHeader()
 
 createButtons()
-
 updateSummary()
+
+}
+
+function updateHeader(){
+
+let info=[bundle.value,woodType.value,thickness.value+"cm",quality.value]
+.filter(v=>v!="")
+.join(" • ")
+
+headerInfo.innerText=info
 
 }
 
 function showSetup(){
-
 measure.classList.remove("active")
-
 setup.classList.add("active")
-
 }
 
 function resetBoards(){
-
 boards=[]
-
 updateSummary()
-
 renderList()
-
 }
 
 function undo(){
-
 boards.pop()
-
 updateSummary()
-
 renderList()
-
 }
 
 function createButtons(){
 
 let lenMinV=Number(lenMin.value)
 let lenMaxV=Number(lenMax.value)
-
 let widMinV=Number(widMin.value)
 let widMaxV=Number(widMax.value)
 
@@ -326,30 +358,22 @@ widthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 for(let i=lenMinV;i<=lenMaxV;i++){
 
 let b=document.createElement("button")
-
 b.innerText=i
 
 b.onclick=()=>{
-
 selectedLength=i
-
 document.querySelectorAll("#lengthGrid button")
 .forEach(x=>x.classList.remove("selected"))
-
 b.classList.add("selected")
-
 widthGrid.classList.remove("disabled")
-
 }
 
 lengthGrid.appendChild(b)
-
 }
 
 for(let i=widMinV;i<=widMaxV;i++){
 
 let b=document.createElement("button")
-
 b.innerText=i
 
 b.onclick=()=>{
@@ -368,7 +392,6 @@ document.querySelectorAll("#lengthGrid button")
 widthGrid.classList.add("disabled")
 
 updateSummary()
-
 renderList()
 
 }
@@ -384,14 +407,10 @@ function updateSummary(){
 let vol=0
 
 boards.forEach(b=>{
-
 vol+=(b.l/10)*(b.w/100)*(thickness.value/100)
-
 })
 
-summary.innerText=
-
-boards.length+" tấm • "+vol.toFixed(3)+" m³"
+summary.innerText=boards.length+" tấm • "+vol.toFixed(4)+" m³"
 
 }
 
@@ -399,7 +418,7 @@ function renderList(){
 
 boardList.innerHTML=""
 
-boards.slice(-10).reverse().forEach((b,i)=>{
+boards.slice().reverse().forEach((b,i)=>{
 
 let d=document.createElement("div")
 
@@ -413,118 +432,136 @@ boardList.appendChild(d)
 }
 
 function deleteBoard(i){
-
 boards.splice(boards.length-1-i,1)
-
 updateSummary()
-
 renderList()
-
 }
 
 function showMatrix(){
 
 measure.classList.remove("active")
-
 matrix.classList.add("active")
 
+updateMatrixHeader()
 renderMatrix()
 
 }
 
 function showMeasure(){
-
 matrix.classList.remove("active")
-
 measure.classList.add("active")
+}
+
+function updateMatrixHeader(){
+
+let vol=0
+boards.forEach(b=>{
+vol+=(b.l/10)*(b.w/100)*(thickness.value/100)
+})
+
+let info=[bundle.value,woodType.value,thickness.value+"cm",quality.value]
+.filter(v=>v!="")
+.join(" • ")
+
+matrixHeader.innerText=info
+matrixPieces.innerText=boards.length+" tấm"
+matrixVolume.innerText=vol.toFixed(4)+" m³"
 
 }
 
 function renderMatrix(){
+if(excelMode.checked) renderExcelMatrix()
+else renderHeatmap()
+}
+
+function renderHeatmap(){
 
 let map={}
 
 boards.forEach(b=>{
-
 let key=b.w+"_"+b.l
-
 map[key]=(map[key]||0)+1
-
 })
 
 let widths=[...new Set(boards.map(b=>b.w))].sort((a,b)=>a-b)
-
 let lengths=[...new Set(boards.map(b=>b.l))].sort((a,b)=>a-b)
 
 let html="<table><tr><th>Rộng \\ Dài</th>"
 
 lengths.forEach(l=>html+="<th>"+l+"</th>")
-
 html+="</tr>"
 
 widths.forEach(w=>{
-
 html+="<tr><th>"+w+"</th>"
-
 lengths.forEach(l=>{
-
 let v=map[w+"_"+l]||0
-
-let color=
-v==0?"white":
-v==1?"#dcfce7":
-v==2?"#86efac":
-"#22c55e"
-
+let color=v==0?"white":v==1?"#dcfce7":v==2?"#86efac":"#22c55e"
 html+="<td style='background:"+color+"'>"+v+"</td>"
-
 })
-
 html+="</tr>"
-
 })
 
 html+="</table>"
 
 matrixContainer.innerHTML=html
 
-matrixHeader.innerText=
-bundle.value+" • "+boards.length+" tấm"
+}
+
+function renderExcelMatrix(){
+
+let groups={}
+
+boards.forEach(b=>{
+if(!groups[b.l])groups[b.l]=[]
+groups[b.l].push(b.w)
+})
+
+let lengths=Object.keys(groups).sort((a,b)=>a-b)
+
+lengths.forEach(l=>groups[l].sort((a,b)=>a-b))
+
+let columns=[]
+
+lengths.forEach(l=>{
+
+let arr=groups[l]
+
+for(let i=0;i<arr.length;i+=10){
+
+columns.push({
+length:l,
+values:arr.slice(i,i+10)
+})
 
 }
 
-function exportImage(){
-
-let canvas=document.createElement("canvas")
-
-canvas.width=1000
-canvas.height=700
-
-let ctx=canvas.getContext("2d")
-
-ctx.fillStyle="white"
-ctx.fillRect(0,0,1000,700)
-
-ctx.fillStyle="black"
-ctx.font="18px Arial"
-
-ctx.fillText("Mã kiện: "+bundle.value,20,40)
-ctx.fillText("Độ dày: "+thickness.value+"cm",20,70)
-ctx.fillText("Số tấm: "+boards.length,20,100)
-
-boards.forEach((b,i)=>{
-
-ctx.fillText(b.l+" x "+b.w,20,150+i*20)
-
 })
 
-let link=document.createElement("a")
+let maxRows=10
 
-link.download="matrix.png"
+let html="<table><tr>"
 
-link.href=canvas.toDataURL()
+columns.forEach(c=>{
+html+="<th>"+c.length+"</th>"
+})
 
-link.click()
+html+="</tr>"
+
+for(let r=0;r<maxRows;r++){
+
+html+="<tr>"
+
+columns.forEach(c=>{
+html+="<td>"+(c.values[r]||"")+"</td>"
+})
+
+html+="</tr>"
+
+}
+
+html+="</table>"
+
+matrixContainer.innerHTML=html
 
 }
 
@@ -532,4 +569,3 @@ link.click()
 
 </body>
 </html>
-
