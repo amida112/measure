@@ -1,34 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Wood Measure</title>
+<title>Đo Gỗ</title>
 
 <style>
 
 body{
-font-family:Arial;
+font-family:-apple-system,BlinkMacSystemFont;
 margin:0;
-background:#f5f7fb;
+background:#f2f4f7;
 text-align:center;
 }
 
-.screen{
-display:none;
-padding:10px;
-}
-
-.active{
-display:block;
-}
+.screen{display:none;padding:12px}
+.active{display:block}
 
 button{
 padding:12px;
-border-radius:10px;
+border-radius:12px;
 border:none;
 background:white;
-box-shadow:0 2px 6px rgba(0,0,0,0.15);
+box-shadow:0 3px 10px rgba(0,0,0,0.15);
 font-size:16px;
 }
 
@@ -39,12 +34,12 @@ margin:10px;
 }
 
 .selected{
-background:#4CAF50;
+background:#2e7d32;
 color:white;
 }
 
 .disabled{
-opacity:0.4;
+opacity:0.35;
 pointer-events:none;
 }
 
@@ -54,31 +49,43 @@ top:20px;
 left:50%;
 transform:translateX(-50%);
 background:#e8f5e9;
-color:#2e7d32;
-padding:10px 18px;
-border-radius:10px;
+color:#1b5e20;
+padding:10px 16px;
+border-radius:12px;
 display:none;
 }
 
 .list{
 max-height:120px;
 overflow:auto;
+text-align:left;
 }
 
-.matrixRow{
-display:flex;
+.matrix{
+overflow:auto;
 }
 
-.matrixCell{
+.matrix table{
+border-collapse:collapse;
+margin:auto;
+}
+
+.matrix td,.matrix th{
+border:1px solid #ccc;
 width:42px;
 height:42px;
-border:1px solid #ccc;
+text-align:center;
+}
+
+.headerBar{
 display:flex;
-align-items:center;
 justify-content:center;
+gap:10px;
+margin-bottom:10px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -89,23 +96,23 @@ justify-content:center;
 
 <div id="setup" class="screen active">
 
-<h2>Setup</h2>
+<h2>Cấu hình</h2>
 
-Bundle ID<br>
+Mã kiện<br>
 <input id="bundle" value="A001"><br><br>
 
-Thickness (cm)<br>
+Độ dày (cm)<br>
 <input id="thickness" value="3"><br><br>
 
-Length range<br>
+Khoảng chiều dài (dm)<br>
 <input id="lenMin" value="20"> -
-<input id="lenMax" value="35"><br><br>
+<input id="lenMax" value="40"><br><br>
 
-Width range<br>
-<input id="widMin" value="15"> -
+Khoảng chiều rộng (cm)<br>
+<input id="widMin" value="8"> -
 <input id="widMax" value="30"><br><br>
 
-Buttons per row<br>
+Số nút mỗi hàng<br>
 
 <button onclick="gridMinus()">-</button>
 <span id="gridCount">6</span>
@@ -113,52 +120,52 @@ Buttons per row<br>
 
 <br><br>
 
-<button onclick="startMeasure()">Start Measurement</button>
+<button onclick="startMeasure()">Bắt đầu đo</button>
 
 </div>
 
-
-<!-- MEASURE -->
+<!-- NHẬP LIỆU -->
 
 <div id="measure" class="screen">
 
-<button onclick="showSetup()">Back</button>
+<div class="headerBar">
+<button onclick="showSetup()">← Quay lại</button>
 <button onclick="resetBoards()">Reset</button>
+<button onclick="undoBoard()">Undo</button>
+</div>
 
 <h3 id="header"></h3>
 
 <div>
-<span id="pcs">0 pcs</span> •
-<span id="vol">0.000 m3</span>
-<button onclick="showMatrix()">Matrix</button>
+<span id="pcs">0 tấm</span> •
+<span id="vol">0.000 m³</span>
+<button onclick="showMatrix()">Ma trận</button>
 </div>
 
-<h3>Length (dm)</h3>
+<h3>Dài (dm)</h3>
 <div id="lengthGrid" class="grid"></div>
 
-<h3>Width (cm)</h3>
+<h3>Rộng (cm)</h3>
 <div id="widthGrid" class="grid disabled"></div>
 
-<h3>Recent Boards</h3>
-
+<h3>Tấm vừa nhập</h3>
 <div id="boardList" class="list"></div>
 
 </div>
-
 
 <!-- MATRIX -->
 
 <div id="matrix" class="screen">
 
-<button onclick="showMeasure()">Back</button>
+<button onclick="showMeasure()">← Quay lại</button>
 
 <h3 id="matrixHeader"></h3>
 
-<div id="matrixContainer"></div>
+<div class="matrix" id="matrixContainer"></div>
 
 <br>
 
-<button onclick="exportImage()">Export Image</button>
+<button onclick="exportImage()">Xuất ảnh ma trận</button>
 
 </div>
 
@@ -168,29 +175,23 @@ let boards=[]
 let grid=6
 let selectedLength=null
 
-function showToast(t){
-let toast=document.getElementById("toast")
-toast.innerText=t
-toast.style.display="block"
-setTimeout(()=>toast.style.display="none",500)
+function showToast(text){
+let t=document.getElementById("toast")
+t.innerText=text
+t.style.display="block"
+setTimeout(()=>t.style.display="none",500)
 }
 
-function gridMinus(){
-if(grid>5)grid--
-gridCount.innerText=grid
-}
-
-function gridPlus(){
-if(grid<7)grid++
-gridCount.innerText=grid
-}
+function gridMinus(){if(grid>5)grid--;gridCount.innerText=grid}
+function gridPlus(){if(grid<7)grid++;gridCount.innerText=grid}
 
 function startMeasure(){
 
 setup.classList.remove("active")
 measure.classList.add("active")
 
-header.innerText=bundle.value+" • "+thickness.value+"cm"
+header.innerText=
+bundle.value+" • "+thickness.value+"cm"
 
 createButtons()
 
@@ -207,12 +208,19 @@ updateSummary()
 renderList()
 }
 
+function undoBoard(){
+boards.pop()
+updateSummary()
+renderList()
+}
+
 function createButtons(){
 
-let lenMin=Number(lenMin.value)
-let lenMax=Number(lenMax.value)
-let widMin=Number(widMin.value)
-let widMax=Number(widMax.value)
+let lenMinV=Number(lenMin.value)
+let lenMaxV=Number(lenMax.value)
+
+let widMinV=Number(widMin.value)
+let widMaxV=Number(widMax.value)
 
 lengthGrid.innerHTML=""
 widthGrid.innerHTML=""
@@ -220,7 +228,7 @@ widthGrid.innerHTML=""
 lengthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 widthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 
-for(let i=lenMin;i<=lenMax;i++){
+for(let i=lenMinV;i<=lenMaxV;i++){
 
 let b=document.createElement("button")
 b.innerText=i
@@ -242,7 +250,7 @@ lengthGrid.appendChild(b)
 
 }
 
-for(let i=widMin;i<=widMax;i++){
+for(let i=widMinV;i<=widMaxV;i++){
 
 let b=document.createElement("button")
 b.innerText=i
@@ -275,16 +283,15 @@ widthGrid.appendChild(b)
 
 function updateSummary(){
 
-pcs.innerText=boards.length+" pcs"
+pcs.innerText=boards.length+" tấm"
 
-let vol=0
+let v=0
+
 boards.forEach(b=>{
-vol+=(b.l/10)*(b.w/100)*(thickness.value/100)
+v+=(b.l/10)*(b.w/100)*(thickness.value/100)
 })
 
-vol=vol.toFixed(3)
-
-document.getElementById("vol").innerText=vol+" m3"
+vol.innerText=v.toFixed(3)+" m³"
 
 }
 
@@ -295,12 +302,20 @@ boardList.innerHTML=""
 boards.slice(-10).reverse().forEach((b,i)=>{
 
 let div=document.createElement("div")
-div.innerText=b.l+" x "+b.w
+
+div.innerHTML=b.l+" x "+b.w+
+" <button onclick='deleteBoard("+i+")'>X</button>"
 
 boardList.appendChild(div)
 
 })
 
+}
+
+function deleteBoard(i){
+boards.splice(boards.length-1-i,1)
+updateSummary()
+renderList()
 }
 
 function showMatrix(){
@@ -309,7 +324,9 @@ measure.classList.remove("active")
 matrix.classList.add("active")
 
 matrixHeader.innerText=
-bundle.value+" • "+thickness.value+"cm • "+boards.length+" pcs"
+bundle.value+" • "+
+boards.length+" tấm • "+
+vol.innerText
 
 renderMatrix()
 
@@ -324,71 +341,78 @@ measure.classList.add("active")
 
 function renderMatrix(){
 
-matrixContainer.innerHTML=""
-
 let map={}
 
 boards.forEach(b=>{
-let k=b.w+"_"+b.l
-map[k]=(map[k]||0)+1
+let key=b.w+"_"+b.l
+map[key]=(map[key]||0)+1
 })
 
 let widths=[...new Set(boards.map(b=>b.w))].sort((a,b)=>a-b)
 let lengths=[...new Set(boards.map(b=>b.l))].sort((a,b)=>a-b)
 
+let html="<table><tr><th>Rộng\\Dài</th>"
+
+lengths.forEach(l=>html+="<th>"+l+"</th>")
+
+html+="</tr>"
+
 widths.forEach(w=>{
 
-let row=document.createElement("div")
-row.className="matrixRow"
+html+="<tr><th>"+w+"</th>"
 
 lengths.forEach(l=>{
 
-let cell=document.createElement("div")
-cell.className="matrixCell"
-
 let v=map[w+"_"+l]||0
 
-cell.innerText=v
-
-cell.style.background=
+let color=
 v==0?"white":
 v==1?"#c8e6c9":
 v==2?"#81c784":
 "#388e3c"
 
-row.appendChild(cell)
+html+="<td style='background:"+color+"'>"+v+"</td>"
 
 })
 
-matrixContainer.appendChild(row)
+html+="</tr>"
 
 })
+
+html+="</table>"
+
+matrixContainer.innerHTML=html
 
 }
 
 function exportImage(){
 
 let canvas=document.createElement("canvas")
-canvas.width=900
-canvas.height=600
+
+canvas.width=1000
+canvas.height=700
 
 let ctx=canvas.getContext("2d")
 
 ctx.fillStyle="white"
-ctx.fillRect(0,0,900,600)
+ctx.fillRect(0,0,1000,700)
 
 ctx.fillStyle="black"
-ctx.font="16px Arial"
+ctx.font="18px Arial"
 
-ctx.fillText("Bundle "+bundle.value,20,30)
+ctx.fillText("Mã kiện: "+bundle.value,20,40)
+ctx.fillText("Độ dày: "+thickness.value+"cm",20,70)
+ctx.fillText("Số tấm: "+boards.length,20,100)
 
 boards.forEach((b,i)=>{
-ctx.fillText(b.l+"x"+b.w,20,60+i*20)
+ctx.fillText(b.l+" x "+b.w,20,150+i*20)
 })
 
 let link=document.createElement("a")
+
 link.download="matrix.png"
 link.href=canvas.toDataURL()
+
 link.click()
 
 }
