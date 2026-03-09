@@ -14,9 +14,7 @@ font-family:-apple-system,BlinkMacSystemFont,Inter,Arial;
 background:#f5f7fa;
 }
 
-.noZoom{
-touch-action:manipulation;
-}
+.noZoom{touch-action:manipulation;}
 
 .header{
 background:#1e293b;
@@ -40,7 +38,7 @@ box-shadow:0 4px 12px rgba(0,0,0,0.08);
 button{
 border:none;
 border-radius:10px;
-padding:14px;
+padding:12px;
 font-size:18px;
 background:#2563eb;
 color:white;
@@ -63,8 +61,8 @@ margin-top:6px;
 background:white;
 color:black;
 border:1px solid #e2e8f0;
-font-size:20px;
-padding:14px;
+font-size:18px;
+padding:12px;
 }
 
 .selected{
@@ -106,21 +104,13 @@ margin:auto;
 
 td,th{
 border:1px solid #ddd;
-width:44px;
-height:44px;
+width:42px;
+height:42px;
 text-align:center;
-font-size:14px;
+font-size:12px;
 }
 
-th{
-background:#f1f5f9;
-}
-
-.info{
-text-align:center;
-margin-bottom:10px;
-font-size:14px;
-}
+th{background:#f1f5f9;}
 
 .formGrid{
 display:grid;
@@ -133,7 +123,6 @@ width:100%;
 padding:8px;
 border-radius:8px;
 border:1px solid #ccc;
-box-sizing:border-box;
 font-size:16px;
 }
 
@@ -144,22 +133,21 @@ justify-content:space-between;
 margin-bottom:4px;
 }
 
+.rangeGroup{
+display:flex;
+gap:20px;
+}
+
 .rangeControl{
 display:flex;
 align-items:center;
 gap:6px;
 }
 
-.rangeGroup{
-display:flex;
-align-items:center;
-gap:20px;
-}
-
 .matrixToolbar{
 display:flex;
-align-items:center;
 gap:14px;
+align-items:center;
 }
 
 .checkboxRow{
@@ -177,7 +165,6 @@ margin-top:6px;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -218,6 +205,13 @@ Chất lượng<br>
 
 <br>
 
+<div class="checkboxRow">
+<span>Gỗ Mỹ</span>
+<input type="checkbox" id="woodUS" onchange="toggleWoodUS()">
+</div>
+
+<br>
+
 Số nút mỗi hàng
 
 <br>
@@ -242,7 +236,7 @@ Số nút mỗi hàng
 
 <div class="card">
 
-<button class="smallBtn" onclick="showSetup()">← Cấu hình</button>
+<button class="smallBtn" onclick="go('setup')">← Cấu hình</button>
 <button class="smallBtn" onclick="resetBoards()">Reset</button>
 <button class="smallBtn" onclick="undo()">Undo</button>
 <button onclick="showMatrix()">Matrix</button>
@@ -262,15 +256,15 @@ Số nút mỗi hàng
 <div class="rangeGroup">
 
 <div class="rangeControl">
-<button class="smallBtn" onclick="lenMin-- ; rebuild()">-</button>
+<button class="smallBtn" onclick="lenMin--; rebuild()">-</button>
 <span id="lenMinLabel"></span>
-<button class="smallBtn" onclick="lenMin++ ; rebuild()">+</button>
+<button class="smallBtn" onclick="lenMin++; rebuild()">+</button>
 </div>
 
 <div class="rangeControl">
-<button class="smallBtn" onclick="lenMax-- ; rebuild()">-</button>
+<button class="smallBtn" onclick="lenMax--; rebuild()">-</button>
 <span id="lenMaxLabel"></span>
-<button class="smallBtn" onclick="lenMax++ ; rebuild()">+</button>
+<button class="smallBtn" onclick="lenMax++; rebuild()">+</button>
 </div>
 
 </div>
@@ -290,15 +284,15 @@ Số nút mỗi hàng
 <div class="rangeGroup">
 
 <div class="rangeControl">
-<button class="smallBtn" onclick="widMin-- ; rebuild()">-</button>
+<button class="smallBtn" onclick="widMin--; rebuild()">-</button>
 <span id="widMinLabel"></span>
-<button class="smallBtn" onclick="widMin++ ; rebuild()">+</button>
+<button class="smallBtn" onclick="widMin++; rebuild()">+</button>
 </div>
 
 <div class="rangeControl">
-<button class="smallBtn" onclick="widMax-- ; rebuild()">-</button>
+<button class="smallBtn" onclick="widMax--; rebuild()">-</button>
 <span id="widMaxLabel"></span>
-<button class="smallBtn" onclick="widMax++ ; rebuild()">+</button>
+<button class="smallBtn" onclick="widMax++; rebuild()">+</button>
 </div>
 
 </div>
@@ -326,7 +320,7 @@ Số nút mỗi hàng
 
 <div class="card matrixToolbar">
 
-<button class="smallBtn" onclick="showMeasure()">← Quay lại</button>
+<button class="smallBtn" onclick="go('measure')">← Quay lại</button>
 
 <div class="checkboxRow">
 <span>Dạng excel</span>
@@ -352,90 +346,87 @@ Số nút mỗi hàng
 
 <script>
 
+/* ================= STATE ================= */
+
 let boards=[]
 let selectedLength=null
 let grid=6
 
 let lenMin=20
-let lenMax=36
-let widMin=14
-let widMax=30
+let lenMax=35
+let widMin=15
+let widMax=35
 
-/* ===== CHẶN DOUBLE TAP ZOOM ===== */
+let woodUS=false
 
-let lastTouchEnd=0
+/* ================= NAVIGATION ================= */
 
-document.addEventListener("touchend",function(event){
-let now=(new Date()).getTime()
-if(now-lastTouchEnd<=300){
-event.preventDefault()
+function go(screen){
+
+document.querySelectorAll(".screen").forEach(s=>{
+s.classList.remove("active")
+})
+
+document.getElementById(screen).classList.add("active")
+
 }
-lastTouchEnd=now
-},false)
 
-/* ===== SPEAK NUMBER ===== */
+/* ================= SPEAK ================= */
 
 function speakNumber(n){
 
 if(!window.speechSynthesis) return
 
-let map={
-0:"không",1:"một",2:"hai",3:"ba",4:"bốn",5:"năm",
-6:"sáu",7:"bảy",8:"tám",9:"chín",10:"mười"
-}
+let text=n.toString().replace(".", " phẩy ")
 
-function read(num){
-
-if(num<=10) return map[num]
-
-if(num<20) return "mười "+map[num-10]
-
-let tens=Math.floor(num/10)
-let unit=num%10
-
-let tensText=map[tens]+" mươi"
-
-if(unit==0) return tensText
-if(unit==1) return tensText+" mốt"
-if(unit==5) return tensText+" lăm"
-
-return tensText+" "+map[unit]
-
-}
-
-let utter=new SpeechSynthesisUtterance(read(n))
+let utter=new SpeechSynthesisUtterance(text)
 utter.lang="vi-VN"
+
 speechSynthesis.speak(utter)
 
 }
 
-/* ===== TOAST ===== */
+/* ================= GRID ================= */
 
-function toast(text){
-let t=document.getElementById("toast")
-t.innerText=text
-t.style.display="block"
-setTimeout(()=>t.style.display="none",1500)
+function gridMinus(){if(grid>4)grid--;gridCount.innerText=grid}
+function gridPlus(){if(grid<8)grid++;gridCount.innerText=grid}
+
+/* ================= WOOD US ================= */
+
+function toggleWoodUS(){
+
+woodUS=document.getElementById("woodUS").checked
+
+if(woodUS){
+
+lenMin=22
+lenMax=25
+widMin=15
+widMax=25
+
+}else{
+
+lenMin=20
+lenMax=35
+widMin=15
+widMax=35
+
 }
 
-function gridMinus(){ if(grid>5)grid--; gridCount.innerText=grid }
-function gridPlus(){ if(grid<7)grid++; gridCount.innerText=grid }
+}
 
-/* ===== START ===== */
+/* ================= START ================= */
 
 function startMeasure(){
 
-if(bundle.value.trim()==""){ alert("Vui lòng nhập mã kiện"); return }
-if(thickness.value.trim()==""){ alert("Vui lòng nhập độ dày"); return }
-
-setup.classList.remove("active")
-measure.classList.add("active")
-
 updateHeader()
 rebuild()
-updateSummary()
+
+go("measure")
 
 }
+
+/* ================= HEADER ================= */
 
 function updateHeader(){
 
@@ -447,24 +438,7 @@ headerInfo.innerText=info
 
 }
 
-function showSetup(){
-measure.classList.remove("active")
-setup.classList.add("active")
-}
-
-function resetBoards(){
-boards=[]
-updateSummary()
-renderList()
-}
-
-function undo(){
-boards.pop()
-updateSummary()
-renderList()
-}
-
-/* ===== REBUILD BUTTONS ===== */
+/* ================= BUILD GRID ================= */
 
 function rebuild(){
 
@@ -485,43 +459,70 @@ widthGrid.innerHTML=""
 lengthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 widthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 
+let lengths=[]
+
 for(let i=lenMin;i<=lenMax;i++){
 
+lengths.push(i)
+
+if(woodUS){
+
+lengths.push(Number((i+0.3).toFixed(1)))
+lengths.push(Number((i+0.5).toFixed(1)))
+lengths.push(Number((i+0.7).toFixed(1)))
+
+}
+
+}
+
+lengths.forEach(v=>{
+
 let b=document.createElement("button")
-b.innerText=i
+b.innerText=v
 
 b.onclick=()=>{
 
-speakNumber(i)
+speakNumber(v)
 
-selectedLength=i
+selectedLength=v
 
 document.querySelectorAll("#lengthGrid button")
 .forEach(x=>x.classList.remove("selected"))
 
 b.classList.add("selected")
+
 widthGrid.classList.remove("disabled")
 
 }
 
 lengthGrid.appendChild(b)
 
-}
+})
+
+let widths=[]
 
 for(let i=widMin;i<=widMax;i++){
 
+widths.push(i)
+
+if(woodUS){
+widths.push(Number((i+0.5).toFixed(1)))
+}
+
+}
+
+widths.forEach(v=>{
+
 let b=document.createElement("button")
-b.innerText=i
+b.innerText=v
 
 b.onclick=()=>{
 
 if(selectedLength==null)return
 
-speakNumber(i)
+speakNumber(v)
 
-boards.push({l:selectedLength,w:i})
-
-toast("Đã thêm "+selectedLength+" x "+i)
+boards.push({l:selectedLength,w:v})
 
 selectedLength=null
 
@@ -537,11 +538,11 @@ renderList()
 
 widthGrid.appendChild(b)
 
-}
+})
 
 }
 
-/* ===== SUMMARY ===== */
+/* ================= SUMMARY ================= */
 
 function updateSummary(){
 
@@ -555,7 +556,7 @@ summary.innerText=boards.length+" tấm • "+vol.toFixed(4)+" m³"
 
 }
 
-/* ===== LIST ===== */
+/* ================= LIST ================= */
 
 function renderList(){
 
@@ -575,31 +576,32 @@ boardList.appendChild(d)
 }
 
 function deleteBoard(i){
+
 boards.splice(boards.length-1-i,1)
+
 updateSummary()
 renderList()
+
 }
 
-/* ===== MATRIX ===== */
+function resetBoards(){boards=[];updateSummary();renderList()}
+function undo(){boards.pop();updateSummary();renderList()}
+
+/* ================= MATRIX ================= */
 
 function showMatrix(){
-
-measure.classList.remove("active")
-matrix.classList.add("active")
 
 updateMatrixHeader()
 renderMatrix()
 
-}
+go("matrix")
 
-function showMeasure(){
-matrix.classList.remove("active")
-measure.classList.add("active")
 }
 
 function updateMatrixHeader(){
 
 let vol=0
+
 boards.forEach(b=>{
 vol+=(b.l/10)*(b.w/100)*(thickness.value/100)
 })
@@ -614,20 +616,16 @@ matrixVolume.innerText=vol.toFixed(4)+" m³"
 
 }
 
-/* ===== MATRIX AUTO SCALE ===== */
-
 function autoScaleMatrix(){
 
 let container=document.getElementById("matrixContainer")
 let table=container.querySelector("table")
 
-if(!table) return
-
-table.style.transform="scale(1)"
+if(!table)return
 
 let scale=Math.min(
 container.clientWidth/table.scrollWidth,
-(container.clientHeight||500)/table.scrollHeight
+500/table.scrollHeight
 )
 
 if(scale<1){
@@ -638,13 +636,15 @@ table.style.transformOrigin="top center"
 }
 
 function renderMatrix(){
+
 if(excelMode.checked) renderExcelMatrix()
 else renderHeatmap()
 
 setTimeout(autoScaleMatrix,50)
+
 }
 
-/* ===== HEATMAP ===== */
+/* ================= HEATMAP ================= */
 
 function renderHeatmap(){
 
@@ -679,7 +679,7 @@ matrixContainer.innerHTML=html
 
 }
 
-/* ===== EXCEL ===== */
+/* ================= EXCEL ================= */
 
 function renderExcelMatrix(){
 
@@ -703,11 +703,7 @@ columns.push({length:l,values:arr.slice(i,i+10)})
 }
 })
 
-let maxRows=10
-
-let html="<div class='info'>Dài (dm) là tiêu đề cột • Giá trị bên dưới là Rộng (cm)</div>"
-
-html+="<table><tr>"
+let html="<table><tr>"
 
 columns.forEach(c=>{
 html+="<th>"+c.length+"</th>"
@@ -715,7 +711,7 @@ html+="<th>"+c.length+"</th>"
 
 html+="</tr>"
 
-for(let r=0;r<maxRows;r++){
+for(let r=0;r<10;r++){
 
 html+="<tr>"
 
