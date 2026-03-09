@@ -28,16 +28,16 @@ font-weight:600;
 .card{
 background:white;
 border-radius:14px;
-padding:16px;
-margin-bottom:12px;
+padding:14px;
+margin-bottom:10px;
 box-shadow:0 4px 12px rgba(0,0,0,0.08);
 }
 
 button{
 border:none;
 border-radius:12px;
-padding:12px;
-font-size:16px;
+padding:14px;
+font-size:18px;
 background:#2563eb;
 color:white;
 }
@@ -45,19 +45,21 @@ color:white;
 .smallBtn{
 background:#e2e8f0;
 color:black;
+padding:8px 12px;
 }
 
 .grid{
 display:grid;
-gap:8px;
-margin-top:10px;
+gap:6px;
+margin-top:8px;
 }
 
 .grid button{
 background:white;
 color:black;
 border:1px solid #e2e8f0;
-font-size:18px;
+font-size:20px;
+padding:14px;
 }
 
 .selected{
@@ -130,15 +132,10 @@ box-sizing:border-box;
 
 .rangeRow{
 display:grid;
-grid-template-columns:1fr 40px 1fr;
-gap:12px;
+grid-template-columns:40px 1fr 40px;
+gap:8px;
 align-items:center;
 margin-top:6px;
-}
-
-.rangeArrow{
-text-align:center;
-font-size:18px;
 }
 
 .matrixToolbar{
@@ -191,7 +188,7 @@ Loại gỗ<br>
 
 <div>
 Độ dày (cm)<br>
-<input id="thickness" type="number" min="1" step="0.1">
+<input id="thickness" type="number" step="0.1" inputmode="decimal">
 </div>
 
 <div>
@@ -207,11 +204,17 @@ Chiều dài (dm)
 
 <div class="rangeRow">
 
+<button class="smallBtn" onclick="lenMinus()">-</button>
 <input id="lenMin" value="20">
+<button class="smallBtn" onclick="lenPlus()">+</button>
 
-<div class="rangeArrow">→</div>
+</div>
 
+<div class="rangeRow">
+
+<button class="smallBtn" onclick="lenMaxMinus()">-</button>
 <input id="lenMax" value="36">
+<button class="smallBtn" onclick="lenMaxPlus()">+</button>
 
 </div>
 
@@ -221,11 +224,17 @@ Chiều rộng (cm)
 
 <div class="rangeRow">
 
+<button class="smallBtn" onclick="widMinus()">-</button>
 <input id="widMin" value="14">
+<button class="smallBtn" onclick="widPlus()">+</button>
 
-<div class="rangeArrow">→</div>
+</div>
 
+<div class="rangeRow">
+
+<button class="smallBtn" onclick="widMaxMinus()">-</button>
 <input id="widMax" value="30">
+<button class="smallBtn" onclick="widMaxPlus()">+</button>
 
 </div>
 
@@ -327,6 +336,41 @@ let boards=[]
 let selectedLength=null
 let grid=6
 
+function speakNumber(n){
+
+if(!window.speechSynthesis) return
+
+let map={
+0:"không",1:"một",2:"hai",3:"ba",4:"bốn",5:"năm",
+6:"sáu",7:"bảy",8:"tám",9:"chín",10:"mười"
+}
+
+function read(num){
+
+if(num<=10) return map[num]
+
+if(num<20) return "mười "+map[num-10]
+
+let tens=Math.floor(num/10)
+let unit=num%10
+
+let tensText=map[tens]+" mươi"
+
+if(unit==0) return tensText
+if(unit==1) return tensText+" mốt"
+if(unit==5) return tensText+" lăm"
+
+return tensText+" "+map[unit]
+
+}
+
+let utter=new SpeechSynthesisUtterance(read(n))
+utter.lang="vi-VN"
+
+speechSynthesis.speak(utter)
+
+}
+
 function toast(text){
 let t=document.getElementById("toast")
 t.innerText=text
@@ -336,6 +380,21 @@ setTimeout(()=>t.style.display="none",1500)
 
 function gridMinus(){ if(grid>5)grid--; gridCount.innerText=grid }
 function gridPlus(){ if(grid<7)grid++; gridCount.innerText=grid }
+
+function lenMinus(){lenMin.value--}
+function lenPlus(){lenMin.value++}
+function lenMaxMinus(){lenMax.value--}
+function lenMaxPlus(){lenMax.value++}
+
+function widMinus(){widMin.value--}
+function widPlus(){widMin.value++}
+function widMaxMinus(){widMax.value--}
+function widMaxPlus(){widMax.value++}
+
+thickness.addEventListener("input",()=>{
+let v=parseFloat(thickness.value)
+if(!isNaN(v)) thickness.value=v.toFixed(1)
+})
 
 function startMeasure(){
 
@@ -397,14 +456,21 @@ let b=document.createElement("button")
 b.innerText=i
 
 b.onclick=()=>{
+
+speakNumber(i)
+
 selectedLength=i
+
 document.querySelectorAll("#lengthGrid button")
 .forEach(x=>x.classList.remove("selected"))
+
 b.classList.add("selected")
 widthGrid.classList.remove("disabled")
+
 }
 
 lengthGrid.appendChild(b)
+
 }
 
 for(let i=widMinV;i<=widMaxV;i++){
@@ -415,6 +481,8 @@ b.innerText=i
 b.onclick=()=>{
 
 if(selectedLength==null)return
+
+speakNumber(i)
 
 boards.push({l:selectedLength,w:i})
 
