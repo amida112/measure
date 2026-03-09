@@ -2,7 +2,7 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 <title>Đo Quy Cách Gỗ</title>
 
@@ -22,20 +22,20 @@ text-align:center;
 font-weight:600;
 }
 
-.screen{display:none;padding:14px}
+.screen{display:none;padding:12px}
 .active{display:block}
 
 .card{
 background:white;
 border-radius:14px;
-padding:14px;
+padding:12px;
 margin-bottom:10px;
 box-shadow:0 4px 12px rgba(0,0,0,0.08);
 }
 
 button{
 border:none;
-border-radius:12px;
+border-radius:10px;
 padding:14px;
 font-size:18px;
 background:#2563eb;
@@ -45,13 +45,14 @@ color:white;
 .smallBtn{
 background:#e2e8f0;
 color:black;
-padding:8px 12px;
+padding:6px 10px;
+font-size:16px;
 }
 
 .grid{
 display:grid;
 gap:6px;
-margin-top:8px;
+margin-top:6px;
 }
 
 .grid button{
@@ -119,7 +120,7 @@ font-size:14px;
 .formGrid{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:18px 24px;
+gap:16px 20px;
 }
 
 input{
@@ -128,14 +129,26 @@ padding:8px;
 border-radius:8px;
 border:1px solid #ccc;
 box-sizing:border-box;
+font-size:16px;
 }
 
-.rangeRow{
-display:grid;
-grid-template-columns:40px 1fr 40px;
-gap:8px;
+.panelHeader{
+display:flex;
 align-items:center;
-margin-top:6px;
+justify-content:space-between;
+margin-bottom:4px;
+}
+
+.rangeControl{
+display:flex;
+align-items:center;
+gap:6px;
+}
+
+.rangeGroup{
+display:flex;
+align-items:center;
+gap:20px;
 }
 
 .matrixToolbar{
@@ -188,53 +201,13 @@ Loại gỗ<br>
 
 <div>
 Độ dày (cm)<br>
-<input id="thickness" type="number" step="0.1" inputmode="decimal">
+<input id="thickness">
 </div>
 
 <div>
 Chất lượng<br>
 <input id="quality">
 </div>
-
-</div>
-
-<br>
-
-Chiều dài (dm)
-
-<div class="rangeRow">
-
-<button class="smallBtn" onclick="lenMinus()">-</button>
-<input id="lenMin" value="20">
-<button class="smallBtn" onclick="lenPlus()">+</button>
-
-</div>
-
-<div class="rangeRow">
-
-<button class="smallBtn" onclick="lenMaxMinus()">-</button>
-<input id="lenMax" value="36">
-<button class="smallBtn" onclick="lenMaxPlus()">+</button>
-
-</div>
-
-<br>
-
-Chiều rộng (cm)
-
-<div class="rangeRow">
-
-<button class="smallBtn" onclick="widMinus()">-</button>
-<input id="widMin" value="14">
-<button class="smallBtn" onclick="widPlus()">+</button>
-
-</div>
-
-<div class="rangeRow">
-
-<button class="smallBtn" onclick="widMaxMinus()">-</button>
-<input id="widMax" value="30">
-<button class="smallBtn" onclick="widMaxPlus()">+</button>
 
 </div>
 
@@ -277,14 +250,56 @@ Số nút mỗi hàng
 
 <div class="card">
 
+<div class="panelHeader">
+
 <b>Dài (dm)</b>
+
+<div class="rangeGroup">
+
+<div class="rangeControl">
+<button class="smallBtn" onclick="lenMin-- ; rebuild()">-</button>
+<span id="lenMinLabel"></span>
+<button class="smallBtn" onclick="lenMin++ ; rebuild()">+</button>
+</div>
+
+<div class="rangeControl">
+<button class="smallBtn" onclick="lenMax-- ; rebuild()">-</button>
+<span id="lenMaxLabel"></span>
+<button class="smallBtn" onclick="lenMax++ ; rebuild()">+</button>
+</div>
+
+</div>
+
+</div>
+
 <div id="lengthGrid" class="grid"></div>
 
 </div>
 
 <div class="card">
 
+<div class="panelHeader">
+
 <b>Rộng (cm)</b>
+
+<div class="rangeGroup">
+
+<div class="rangeControl">
+<button class="smallBtn" onclick="widMin-- ; rebuild()">-</button>
+<span id="widMinLabel"></span>
+<button class="smallBtn" onclick="widMin++ ; rebuild()">+</button>
+</div>
+
+<div class="rangeControl">
+<button class="smallBtn" onclick="widMax-- ; rebuild()">-</button>
+<span id="widMaxLabel"></span>
+<button class="smallBtn" onclick="widMax++ ; rebuild()">+</button>
+</div>
+
+</div>
+
+</div>
+
 <div id="widthGrid" class="grid disabled"></div>
 
 </div>
@@ -336,6 +351,22 @@ let boards=[]
 let selectedLength=null
 let grid=6
 
+let lenMin=20
+let lenMax=36
+let widMin=14
+let widMax=30
+
+function resetZoom(){
+
+document.activeElement.blur()
+
+setTimeout(()=>{
+document.body.style.zoom="1"
+window.scrollTo(0,0)
+},50)
+
+}
+
 function speakNumber(n){
 
 if(!window.speechSynthesis) return
@@ -366,7 +397,6 @@ return tensText+" "+map[unit]
 
 let utter=new SpeechSynthesisUtterance(read(n))
 utter.lang="vi-VN"
-
 speechSynthesis.speak(utter)
 
 }
@@ -381,31 +411,18 @@ setTimeout(()=>t.style.display="none",1500)
 function gridMinus(){ if(grid>5)grid--; gridCount.innerText=grid }
 function gridPlus(){ if(grid<7)grid++; gridCount.innerText=grid }
 
-function lenMinus(){lenMin.value--}
-function lenPlus(){lenMin.value++}
-function lenMaxMinus(){lenMax.value--}
-function lenMaxPlus(){lenMax.value++}
-
-function widMinus(){widMin.value--}
-function widPlus(){widMin.value++}
-function widMaxMinus(){widMax.value--}
-function widMaxPlus(){widMax.value++}
-
-thickness.addEventListener("input",()=>{
-let v=parseFloat(thickness.value)
-if(!isNaN(v)) thickness.value=v.toFixed(1)
-})
-
 function startMeasure(){
 
 if(bundle.value.trim()==""){ alert("Vui lòng nhập mã kiện"); return }
 if(thickness.value.trim()==""){ alert("Vui lòng nhập độ dày"); return }
 
+resetZoom()
+
 setup.classList.remove("active")
 measure.classList.add("active")
 
 updateHeader()
-createButtons()
+rebuild()
 updateSummary()
 
 }
@@ -421,8 +438,12 @@ headerInfo.innerText=info
 }
 
 function showSetup(){
+
+resetZoom()
+
 measure.classList.remove("active")
 setup.classList.add("active")
+
 }
 
 function resetBoards(){
@@ -437,12 +458,18 @@ updateSummary()
 renderList()
 }
 
-function createButtons(){
+function rebuild(){
 
-let lenMinV=Number(lenMin.value)
-let lenMaxV=Number(lenMax.value)
-let widMinV=Number(widMin.value)
-let widMaxV=Number(widMax.value)
+lenMinLabel.innerText=lenMin
+lenMaxLabel.innerText=lenMax
+widMinLabel.innerText=widMin
+widMaxLabel.innerText=widMax
+
+createButtons()
+
+}
+
+function createButtons(){
 
 lengthGrid.innerHTML=""
 widthGrid.innerHTML=""
@@ -450,7 +477,7 @@ widthGrid.innerHTML=""
 lengthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 widthGrid.style.gridTemplateColumns="repeat("+grid+",1fr)"
 
-for(let i=lenMinV;i<=lenMaxV;i++){
+for(let i=lenMin;i<=lenMax;i++){
 
 let b=document.createElement("button")
 b.innerText=i
@@ -473,7 +500,7 @@ lengthGrid.appendChild(b)
 
 }
 
-for(let i=widMinV;i<=widMaxV;i++){
+for(let i=widMin;i<=widMax;i++){
 
 let b=document.createElement("button")
 b.innerText=i
@@ -543,6 +570,8 @@ renderList()
 
 function showMatrix(){
 
+resetZoom()
+
 measure.classList.remove("active")
 matrix.classList.add("active")
 
@@ -552,8 +581,12 @@ renderMatrix()
 }
 
 function showMeasure(){
+
+resetZoom()
+
 matrix.classList.remove("active")
 measure.classList.add("active")
+
 }
 
 function updateMatrixHeader(){
