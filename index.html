@@ -14,6 +14,10 @@ font-family:-apple-system,BlinkMacSystemFont,Inter,Arial;
 background:#f5f7fa;
 }
 
+.noZoom{
+touch-action:manipulation;
+}
+
 .header{
 background:#1e293b;
 color:white;
@@ -91,7 +95,8 @@ overflow:auto;
 }
 
 .matrix{
-overflow:auto;
+overflow:hidden;
+width:100%;
 }
 
 table{
@@ -181,7 +186,7 @@ margin-top:6px;
 
 <!-- SETUP -->
 
-<div id="setup" class="screen active">
+<div id="setup" class="screen active noZoom">
 
 <div class="header">Cấu hình kiện</div>
 
@@ -229,7 +234,7 @@ Số nút mỗi hàng
 
 <!-- MEASURE -->
 
-<div id="measure" class="screen">
+<div id="measure" class="screen noZoom">
 
 <div class="header">
 <span id="headerInfo"></span>
@@ -356,16 +361,19 @@ let lenMax=36
 let widMin=14
 let widMax=30
 
-function resetZoom(){
+/* ===== CHẶN DOUBLE TAP ZOOM ===== */
 
-document.activeElement.blur()
+let lastTouchEnd=0
 
-setTimeout(()=>{
-document.body.style.zoom="1"
-window.scrollTo(0,0)
-},50)
-
+document.addEventListener("touchend",function(event){
+let now=(new Date()).getTime()
+if(now-lastTouchEnd<=300){
+event.preventDefault()
 }
+lastTouchEnd=now
+},false)
+
+/* ===== SPEAK NUMBER ===== */
 
 function speakNumber(n){
 
@@ -401,6 +409,8 @@ speechSynthesis.speak(utter)
 
 }
 
+/* ===== TOAST ===== */
+
 function toast(text){
 let t=document.getElementById("toast")
 t.innerText=text
@@ -411,12 +421,12 @@ setTimeout(()=>t.style.display="none",1500)
 function gridMinus(){ if(grid>5)grid--; gridCount.innerText=grid }
 function gridPlus(){ if(grid<7)grid++; gridCount.innerText=grid }
 
+/* ===== START ===== */
+
 function startMeasure(){
 
 if(bundle.value.trim()==""){ alert("Vui lòng nhập mã kiện"); return }
 if(thickness.value.trim()==""){ alert("Vui lòng nhập độ dày"); return }
-
-resetZoom()
 
 setup.classList.remove("active")
 measure.classList.add("active")
@@ -438,12 +448,8 @@ headerInfo.innerText=info
 }
 
 function showSetup(){
-
-resetZoom()
-
 measure.classList.remove("active")
 setup.classList.add("active")
-
 }
 
 function resetBoards(){
@@ -457,6 +463,8 @@ boards.pop()
 updateSummary()
 renderList()
 }
+
+/* ===== REBUILD BUTTONS ===== */
 
 function rebuild(){
 
@@ -533,6 +541,8 @@ widthGrid.appendChild(b)
 
 }
 
+/* ===== SUMMARY ===== */
+
 function updateSummary(){
 
 let vol=0
@@ -544,6 +554,8 @@ vol+=(b.l/10)*(b.w/100)*(thickness.value/100)
 summary.innerText=boards.length+" tấm • "+vol.toFixed(4)+" m³"
 
 }
+
+/* ===== LIST ===== */
 
 function renderList(){
 
@@ -568,9 +580,9 @@ updateSummary()
 renderList()
 }
 
-function showMatrix(){
+/* ===== MATRIX ===== */
 
-resetZoom()
+function showMatrix(){
 
 measure.classList.remove("active")
 matrix.classList.add("active")
@@ -581,12 +593,8 @@ renderMatrix()
 }
 
 function showMeasure(){
-
-resetZoom()
-
 matrix.classList.remove("active")
 measure.classList.add("active")
-
 }
 
 function updateMatrixHeader(){
@@ -606,10 +614,37 @@ matrixVolume.innerText=vol.toFixed(4)+" m³"
 
 }
 
+/* ===== MATRIX AUTO SCALE ===== */
+
+function autoScaleMatrix(){
+
+let container=document.getElementById("matrixContainer")
+let table=container.querySelector("table")
+
+if(!table) return
+
+table.style.transform="scale(1)"
+
+let scale=Math.min(
+container.clientWidth/table.scrollWidth,
+(container.clientHeight||500)/table.scrollHeight
+)
+
+if(scale<1){
+table.style.transform="scale("+scale+")"
+table.style.transformOrigin="top center"
+}
+
+}
+
 function renderMatrix(){
 if(excelMode.checked) renderExcelMatrix()
 else renderHeatmap()
+
+setTimeout(autoScaleMatrix,50)
 }
+
+/* ===== HEATMAP ===== */
 
 function renderHeatmap(){
 
@@ -643,6 +678,8 @@ html+="</table>"
 matrixContainer.innerHTML=html
 
 }
+
+/* ===== EXCEL ===== */
 
 function renderExcelMatrix(){
 
