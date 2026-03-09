@@ -2,7 +2,7 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Đo Quy Cách Gỗ</title>
 
@@ -14,7 +14,9 @@ font-family:-apple-system,BlinkMacSystemFont,Inter,Arial;
 background:#f5f7fa;
 }
 
-.noZoom{touch-action:manipulation;}
+.noZoom{
+touch-action:manipulation;
+}
 
 .header{
 background:#1e293b;
@@ -346,6 +348,8 @@ Số nút mỗi hàng
 
 <script>
 
+/* STATE */
+
 let boards=[]
 let selectedLength=null
 let grid=6
@@ -377,7 +381,48 @@ if(!window.speechSynthesis) return
 
 speechSynthesis.cancel()
 
-let text=n.toString().replace(".", " phẩy ")
+const digits=[
+"không","một","hai","ba","bốn",
+"năm","sáu","bảy","tám","chín"
+]
+
+function readInt(num){
+
+if(num<10) return digits[num]
+
+if(num==10) return "mười"
+
+if(num<20){
+return "mười "+digits[num%10]
+}
+
+let tens=Math.floor(num/10)
+let unit=num%10
+
+if(unit==0) return digits[tens]+" mươi"
+
+if(unit==1) return digits[tens]+" mốt"
+
+return digits[tens]+" "+digits[unit]
+
+}
+
+let text=""
+
+let s=n.toString()
+
+if(s.includes(".")){
+
+let parts=s.split(".")
+
+text = readInt(parseInt(parts[0])) + " phẩy " +
+parts[1].split("").map(d=>digits[d]).join(" ")
+
+}else{
+
+text = readInt(parseInt(s))
+
+}
 
 let utter=new SpeechSynthesisUtterance(text)
 utter.lang="vi-VN"
@@ -642,9 +687,11 @@ let table=container.querySelector("table")
 
 if(!table)return
 
+let maxHeight=window.innerHeight*0.75
+
 let scale=Math.min(
 container.clientWidth/table.scrollWidth,
-500/table.scrollHeight
+maxHeight/table.scrollHeight
 )
 
 if(scale<1){
